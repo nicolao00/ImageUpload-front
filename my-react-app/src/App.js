@@ -3,36 +3,27 @@ import axios from "axios";
 import "./App.css";
 
 // 백엔드 API 도메인 설정
-const API_BASE_URL = "https://uploader.p-e.kr";
+// const API_BASE_URL = "https://uploader.p-e.kr";
+const API_BASE_URL = "http://localhost:8080";
 
 function App() {
-  const [images, setImages] = useState([]);
-  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [selectedFiles, setSelectedFiles] = useState([]); // 선택된 파일들
+  const [previews, setPreviews] = useState([]); // 미리보기 URL들
   const [userName, setUserName] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [images, setImages] = useState([]); // 조회된 이미지 리스트
+  const [selectedImageIds, setSelectedImageIds] = useState([]); // 선택된 이미지들의 ID들
 
-  useEffect(() => {
-    if (userName) {
-      fetchImages(userName);
-    }
-  }, [userName]);
-
-  const fetchImages = async (user) => {
-    setLoading(true);
-    try {
-      const response = await axios.get(`${API_BASE_URL}/image/user/${user}`);
-      setImages(response.data.data.path);
-    } catch (error) {
-      console.error("Error fetching images", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // 파일 선택 시 호출되는 함수
   const handleFileChange = (e) => {
-    setSelectedFiles(e.target.files);
+    const files = Array.from(e.target.files);
+    setSelectedFiles(files);
+
+    // 파일의 미리보기 URL 생성
+    const previewUrls = files.map((file) => URL.createObjectURL(file));
+    setPreviews(previewUrls);
   };
 
+  // 파일 업로드
   const handleUpload = async () => {
     const formData = new FormData();
     for (let i = 0; i < selectedFiles.length; i++) {
@@ -41,59 +32,104 @@ function App() {
     formData.append("user", userName);
 
     try {
-      await axios.post(`${API_BASE_URL}/image/user`, formData);
+      const response = await axios.post(`${API_BASE_URL}/image/user`, formData);
       alert("Images uploaded successfully");
-      fetchImages(userName);
+      console.log("Uploaded URLs:", response.data.data.uuid_name);
+      setPreviews([]); // 업로드 후 미리보기 초기화
+      setSelectedFiles([]); // 업로드 후 선택된 파일 초기화
     } catch (error) {
       console.error("Error uploading images", error);
+      alert("Failed to upload images");
     }
   };
 
-  const handleDelete = async (uuidName) => {
+  // 이미지 조회
+  const fetchImages = async () => {
     try {
-      await axios.delete(`${API_BASE_URL}/image/user/${uuidName}`);
-      alert("Image deleted successfully");
-      fetchImages(userName);
+      console.log(API_BASE_URL);
+      const response = await axios.get(
+        `${API_BASE_URL}/image/user/${userName}`
+      );
+      setImages(response.data.data.path);
     } catch (error) {
-      console.error("Error deleting image", error);
+      console.error("Error fetching images", error);
     }
+  };
+
+  // 이미지 삭제
+  const handleDelete = async () => {
+    try {
+      for (let id of selectedImageIds) {
+        await axios.delete(`${API_BASE_URL}/image/user/${id}`);
+      }
+      alert("Selected images deleted successfully");
+      fetchImages(); // 삭제 후 목록 갱신
+      setSelectedImageIds([]); // 선택된 이미지 초기화
+    } catch (error) {
+      console.error("Error deleting images", error);
+      alert("Failed to delete images");
+    }
+  };
+
+  // 이미지 선택 처리
+  const handleImageSelect = (uuidName) => {
+    setSelectedImageIds((prevState) =>
+      prevState.includes(uuidName)
+        ? prevState.filter((id) => id !== uuidName)
+        : [...prevState, uuidName]
+    );
   };
 
   return (
     <div className="container">
-      <h1>Image Upload and Display</h1>
-      <input
-        type="text"
-        placeholder="Enter username"
-        value={userName}
-        onChange={(e) => setUserName(e.target.value)}
-      />
-      <input type="file" multiple onChange={handleFileChange} />
-      <button onClick={handleUpload}>Upload</button>
+      <h1>Image Upload and Management2</h1>
 
-      <ImageList images={images} onDelete={handleDelete} loading={loading} />
+      <div className="upload-section">
+        <input
+          type="text"
+          placeholder="Enter username"
+          value={userName}
+          onChange={(e) => setUserName(e.target.value)}
+        />
+        <input type="file" multiple onChange={handleFileChange} />
+        <button onClick={handleUpload}>Upload</button>
+
+        <h2>Selected Images Preview</h2>
+        <div className="preview-container">
+          {previews.map((preview, index) => (
+            <img key={index} src={preview} alt="Preview" />
+          ))}
+        </div>
+      </div>
+
+      <div className="management-section">
+        <button onClick={fetchImages}>Fetch Uploaded Images</button>
+
+        <h2>Uploaded Images</h2>
+        {images.length > 0 ? (
+          <ul>
+            {images.map((image) => (
+              <li key={image.uuidName}>
+                <label>
+                  <input
+                    type="checkbox"
+                    onChange={() => handleImageSelect(image.uuidName)}
+                  />
+                  <img src={image.url} alt={image.originName} />
+                  {image.originName}
+                </label>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p>No images uploaded yet.</p>
+        )}
+
+        {selectedImageIds.length > 0 && (
+          <button onClick={handleDelete}>Delete Selected Images</button>
+        )}
+      </div>
     </div>
-  );
-}
-
-function ImageList({ images, onDelete, loading }) {
-  if (loading) {
-    return <p>Loading...</p>;
-  }
-
-  if (!images.length) {
-    return <p className="no-images">No images uploaded yet.</p>;
-  }
-
-  return (
-    <ul>
-      {images.map((image) => (
-        <li key={image.uuidName}>
-          <img src={image.url} alt="Uploaded" />
-          <button onClick={() => onDelete(image.uuidName)}>Delete</button>
-        </li>
-      ))}
-    </ul>
   );
 }
 
