@@ -1,9 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import axios from "axios";
 import "./App.css";
 
-// 백엔드 API 도메인 설정
-// const API_BASE_URL = "https://uploader.p-e.kr";
 const API_BASE_URL = "http://localhost:8080";
 
 function App() {
@@ -34,7 +32,6 @@ function App() {
     try {
       const response = await axios.post(`${API_BASE_URL}/image/user`, formData);
       alert("Images uploaded successfully");
-      console.log("Uploaded URLs:", response.data.data.uuid_name);
       setPreviews([]); // 업로드 후 미리보기 초기화
       setSelectedFiles([]); // 업로드 후 선택된 파일 초기화
     } catch (error) {
@@ -46,7 +43,6 @@ function App() {
   // 이미지 조회
   const fetchImages = async () => {
     try {
-      console.log(API_BASE_URL);
       const response = await axios.get(
         `${API_BASE_URL}/image/user/${userName}`
       );
@@ -82,7 +78,7 @@ function App() {
 
   return (
     <div className="container">
-      <h1>Image Upload and Management2</h1>
+      <h1>Image Upload and Management</h1>
 
       <div className="upload-section">
         <input
@@ -115,9 +111,9 @@ function App() {
                     type="checkbox"
                     onChange={() => handleImageSelect(image.uuidName)}
                   />
-                  <img src={image.url} alt={image.originName} />
-                  {image.originName}
                 </label>
+                <img src={image.url} alt={image.originName} />
+                <span>{image.originName}</span>
               </li>
             ))}
           </ul>

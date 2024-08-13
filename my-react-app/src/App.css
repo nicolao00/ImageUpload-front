@@ -1,3 +1,4 @@
+/* 기존 스타일 유지 */
 body {
   font-family: Arial, sans-serif;
   background-color: #f4f4f4;
@@ -63,14 +64,28 @@ ul {
 
 li {
   margin-bottom: 20px;
-  position: relative;
+  display: flex;
+  align-items: center; /* 이미지와 텍스트 수직 정렬 */
 }
 
-li button {
-  position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
+li img {
+  max-width: 100px; /* 이미지 크기를 조절 */
+  margin-left: 10px; /* 이미지와 체크박스 사이의 간격 */
+  margin-right: 10px; /* 이미지와 텍스트 사이의 간격 */
+  border-radius: 8px;
+}
+
+label {
+  display: flex;
+  align-items: center;
+}
+
+label input[type="checkbox"] {
+  margin-right: 10px;
+}
+
+span {
+  margin-left: 10px; /* 텍스트와 이미지 사이의 간격 */
 }
 
 .no-images {
