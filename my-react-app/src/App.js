@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import axios from "axios";
 import "./App.css";
 
-const API_BASE_URL = "http://localhost:8080";
+// const API_BASE_URL = "http://localhost:8080";
+const API_BASE_URL = "https://uploader.p-e.kr";
 
 function App() {
   const [selectedFiles, setSelectedFiles] = useState([]); // 선택된 파일들
