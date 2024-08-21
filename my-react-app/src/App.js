@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "./App.css";
 
@@ -11,6 +11,13 @@ function App() {
   const [userName, setUserName] = useState("");
   const [images, setImages] = useState([]); // 조회된 이미지 리스트
   const [selectedImageIds, setSelectedImageIds] = useState([]); // 선택된 이미지들의 ID들
+
+  // 미리보기 URL 정리
+  useEffect(() => {
+    return () => {
+      previews.forEach((preview) => URL.revokeObjectURL(preview));
+    };
+  }, [previews]);
 
   // 파일 선택 시 호출되는 함수
   const handleFileChange = (e) => {
@@ -35,6 +42,7 @@ function App() {
       alert("Images uploaded successfully");
       setPreviews([]); // 업로드 후 미리보기 초기화
       setSelectedFiles([]); // 업로드 후 선택된 파일 초기화
+      fetchImages(); // 업로드 후 이미지 목록 갱신
     } catch (error) {
       console.error("Error uploading images", error);
       alert("Failed to upload images");
@@ -47,7 +55,7 @@ function App() {
       const response = await axios.get(
         `${API_BASE_URL}/image/user/${userName}`
       );
-      setImages(response.data.data.path);
+      setImages(response.data.data.path); // 응답 데이터 사용
     } catch (error) {
       console.error("Error fetching images", error);
     }
@@ -60,8 +68,8 @@ function App() {
         await axios.delete(`${API_BASE_URL}/image/user/${id}`);
       }
       alert("Selected images deleted successfully");
-      fetchImages(); // 삭제 후 목록 갱신
       setSelectedImageIds([]); // 선택된 이미지 초기화
+      fetchImages(); // 삭제 후 목록 갱신
     } catch (error) {
       console.error("Error deleting images", error);
       alert("Failed to delete images");
@@ -89,7 +97,12 @@ function App() {
           onChange={(e) => setUserName(e.target.value)}
         />
         <input type="file" multiple onChange={handleFileChange} />
-        <button onClick={handleUpload}>Upload</button>
+        <button
+          onClick={handleUpload}
+          disabled={!userName || selectedFiles.length === 0}
+        >
+          Upload
+        </button>
 
         <h2>Selected Images Preview</h2>
         <div className="preview-container">
@@ -100,7 +113,9 @@ function App() {
       </div>
 
       <div className="management-section">
-        <button onClick={fetchImages}>Fetch Uploaded Images</button>
+        <button onClick={fetchImages} disabled={!userName}>
+          Fetch Uploaded Images
+        </button>
 
         <h2>Uploaded Images</h2>
         {images.length > 0 ? (
@@ -111,6 +126,7 @@ function App() {
                   <input
                     type="checkbox"
                     onChange={() => handleImageSelect(image.uuidName)}
+                    checked={selectedImageIds.includes(image.uuidName)}
                   />
                 </label>
                 <img src={image.url} alt={image.originName} />
@@ -123,7 +139,9 @@ function App() {
         )}
 
         {selectedImageIds.length > 0 && (
-          <button onClick={handleDelete}>Delete Selected Images</button>
+          <button onClick={handleDelete}>
+            Delete Selected Images ({selectedImageIds.length})
+          </button>
         )}
       </div>
     </div>
