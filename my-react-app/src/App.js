@@ -38,7 +38,7 @@ function App() {
     formData.append("user", userName);
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/image/user`, formData);
+      await axios.post(`${API_BASE_URL}/image/user`, formData);
       alert("Images uploaded successfully");
       setPreviews([]); // 업로드 후 미리보기 초기화
       setSelectedFiles([]); // 업로드 후 선택된 파일 초기화
@@ -52,10 +52,10 @@ function App() {
   // 이미지 조회
   const fetchImages = async () => {
     try {
-      const response = await axios.get(
+      const { data } = await axios.get(
         `${API_BASE_URL}/image/user/${userName}`
       );
-      setImages(response.data.data.path); // 응답 데이터 사용
+      setImages(data.data.path); // 응답 데이터 사용
     } catch (error) {
       console.error("Error fetching images", error);
     }
